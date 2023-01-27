@@ -1,8 +1,11 @@
-const { program } = require("commander");
+
 const fetch = require("node-fetch");
-const shell = require("shelljs");
 const fs = require("fs");
 const path = require("path");
+const { program } = require("commander");
+const shell = require("shelljs");
+
+
 
 program
   .argument("<username>", "live username")
