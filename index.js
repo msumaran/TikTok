@@ -61,5 +61,23 @@ fetch(url)
     fs.mkdirSync(path.dirname(fileName), { recursive: true });
 
     console.log(`Downloading to ${fileName}`);
-    shell.exec(`ffmpeg -i ${liveUrl} -c copy ${fileName}`);
+
+    if ( shell.exec(`ffmpeg -i ${liveUrl} -c copy ${fileName}`).code == 0) {
+     
+      if ( shell.exec(`ffmpeg -i  ${fileName} -acodec copy ${fileName}.mp3`).code == 0) {
+
+        shell.exec(`gcloud storage cp ${fileName}.mp3 gs://tiktoklive`);
+        
+
+      }
+
+
+    }
+
+
+
   });
+
+  
+  
+  
