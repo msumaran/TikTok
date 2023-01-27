@@ -1,0 +1,17 @@
+{
+  "name": "tiktoklive",
+  "version": "1.0.0",
+  "repository": "https://github.com/Pauloo27/tiktok-live",
+  "description": "A simple NodeJS application to download TikTok lives by the share URL.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Pauloo27",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "commander": "^9.5.0",
+    "node-fetch": "^2.6.7",
+    "shelljs": "^0.8.5"
+  }
+}
