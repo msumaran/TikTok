@@ -12,6 +12,9 @@
   "dependencies": {
     "@google-cloud/speech": "^5.2.0",
     "commander": "^9.5.0",
+    "dotenv": "^16.0.3",
+    "mysql": "^2.18.1",
+    "mysql-crud": "^0.1.4",
     "node-fetch": "^2.6.7",
     "shelljs": "^0.8.5"
   }

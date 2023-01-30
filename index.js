@@ -1,11 +1,15 @@
-
 const fetch = require("node-fetch");
 const fs = require("fs");
 const path = require("path");
 const { program } = require("commander");
 const shell = require("shelljs");
+const { getUrl } = require("./models/video");
+const { convertMp4toPCM } = require("./models/audio");
+const { listDir } = require("./models/folder");
 
+const { createLives, updateLives } = require("./models/db");
 
+const dirMp4 = listDir("./downloads", ".mp4");
 
 program
   .argument("<username>", "live username")
@@ -17,14 +21,13 @@ program
   .option("--format <format>", "output format", "mp4");
 
 program.parse();
-
+let child = "";
 const options = program.opts();
 const args = program.args;
 
 const format = options.format;
-
-if (format != 'mp4') {
-  console.error("Only mp4 format is supported at the moment");
+if (format != "mp4") {
+  console.error("🛑 Only mp4 format is supported at the moment");
   process.exit(1);
 }
 
@@ -32,52 +35,35 @@ const input = args[0];
 const username = input.startsWith("@") ? input.substring(1) : input;
 const url = `https://www.tiktok.com/@${username}/live`;
 
-fetch(url)
-  .then((res) => {
-    return res.text();
-  })
-  .then(async (body) => {
-    const matches = body.match(/room_id=(\d+)/);
+console.log(`🟢 The server started`);
 
-    if (!matches) {
-      console.log("No live stream found.");
-      process.exit(0);
+getUrl(username, options).then((response) => {
+  let { liveUrl, fileName, title } = response;
+
+  let idLive = createLives(username, title, fileName);
+
+  child = shell.exec(
+    `ffmpeg -i ${liveUrl} -c copy ${fileName}`,
+    function (code, stdout, stderr) {
+      console.log("🛑 Exit code:", code);
+
+      // Listar
+      dirMp4.forEach((file) => {
+        convertMp4toPCM(file);
+      });
+      listDir("./downloads", ".pcm");
+      console.log(`🛑 The server stopped finished`);
+      setTimeout(() => process.exit(0), 5000);
     }
+  );
+});
 
-    const roomId = matches[1];
+let callAmount = 0;
+process.on("SIGINT", function () {
+  if (callAmount < 1) {
+    console.log(`🛑 The server initiated the stop`);
+    shell.echo("q");
+  }
 
-    const apiURL = `https://www.tiktok.com/api/live/detail/?aid=1988&roomID=${roomId}`;
-
-    const res = await (await fetch(apiURL)).json();
-    const { title, liveUrl } = res.LiveRoomInfo;
-
-    console.log(`Found live "${title}":`);
-    console.log(`m3u8 URL: ${liveUrl}`);
-
-    const fileName = options.output.endsWith(options.format)
-      ? options.output
-      : `${options.output.replace(/\/$/, "")}/${username}-${Date.now()}.mp4`;
-
-    fs.mkdirSync(path.dirname(fileName), { recursive: true });
-
-    console.log(`Downloading to ${fileName}`);
-
-    if ( shell.exec(`ffmpeg -i ${liveUrl} -c copy ${fileName}`).code == 0) {
-     
-      if ( shell.exec(`ffmpeg -i  ${fileName} -acodec copy ${fileName}.mp3`).code == 0) {
-
-        shell.exec(`gcloud storage cp ${fileName}.mp3 gs://tiktoklive`);
-        
-
-      }
-
-
-    }
-
-
-
-  });
-
-  
-  
-  
+  callAmount++;
+});
